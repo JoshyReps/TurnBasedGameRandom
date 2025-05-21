@@ -1,7 +1,8 @@
-package com.mycompany.turnbasedgame;
+package com.mycompany.turnbasedgamereponoya;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.InputMismatchException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -9,12 +10,12 @@ import java.util.Random;
 import java.util.Scanner;
 import java.util.Stack;
 
-public class TurnBasedGame {
+public class TurnBasedGameReponoya {
 
     public static Random random = new Random();
     public static Scanner s = new Scanner(System.in);
     
-    // ------------------------------ HP    Name   Max  Min Passive Ability
+    // ------------------------------------  HP    Name   Max Min  Passive Ability
     static Character player = new Character(100, "Player", 10, 1, "TurnTechnique");
     // ---------------------------------------------------------------------
     
@@ -36,11 +37,6 @@ public class TurnBasedGame {
     )); 
     // -------------------------------------------------------------------------
     
-    // -------------------- Location Area Coordinates ----------------------
-    int[][] locationArea = {{0,0},{15,5000},{300,-3000},{750,1641},{162365125, 512516434}};
-    // ---------------------------------------------------------------------
-    
-    
     public static void main(String[] args) {
         
         boolean heart = true;
@@ -56,7 +52,7 @@ public class TurnBasedGame {
                            2. -> Check Map
                            3. -> Fight Random
                            4. -> Exit
-                           """);
+                           """.formatted(player.playerName));
         
             System.out.print("Enter Input: ");
             // ---------------------------------------------------------------------
@@ -73,33 +69,40 @@ public class TurnBasedGame {
 
                                     Area Coordinates :
 
-                                    [0,0] -> Spawn / Foosha Village
-                                    [15,100] -> Sky Island
-                                    [25,-100] -> Fish Island
-                                    [50,50] -> The Land of Wano
-                                    [333, 666] -> The Grand Line
+                                    [0, 0] -> Spawn / Foosha Village
+                                    [3, 12] -> Sky Island
+                                    [-3, -12] -> Fish Island
+                                    [15, 15] -> The Land of Wano
+                                    [50, 50] -> The Grand Line
                                     Back to Menu
                                    """);
-                        case 3 -> encounter();
+                        case 3 -> encounter(100, " (BOT)", 10, 1);
                         case 4 -> heart = false;
                     }
                 }
                 else System.out.println("Invalid Input");
                 
             } 
-            catch (Exception e) {
-                System.out.println("That is an Invalid Input");
+            catch (InterruptedException e) {
+                System.out.println("Thread Interrupted"); s.nextLine();
+            }
+            catch (InputMismatchException e) {
+                System.out.println("That is an Invalid Input"); s.nextLine();
             }
         }
     }
     
     
-    private static void travel () {
+    private static void travel () throws InterruptedException {
+        
+        // -------------------- Location Area Coordinates ----------------------
+        int[][] locationArea = {{0,0},{3,12},{-3,-12},{15,15},{50, 50}};
+        // ---------------------------------------------------------------------
         
         while(true) {
             
             System.out.println("""
-                               --------------- Player Movement Control -------------
+                               %n--------------- Player Movement Control -------------
                                
                                Current Location : %s
                                
@@ -110,23 +113,59 @@ public class TurnBasedGame {
                                "s" -> South
                                "d" -> East
                                "x" -> Back to Menu
-                               -----------------------------------------------------
+                               -----------------------------------------------------%n
                                """.formatted(coordinateToLocation(), player.playerName, player.playerPosition[0], player.playerPosition[1]));
             
-            System.out.print("Enter Movement: ");
+            
+            for(int[] area : locationArea) {
+                
+                if(Arrays.equals(area, player.playerPosition)){
+                    
+                    if(Arrays.toString(player.playerPosition).equals("[0, 0]")) {System.out.println("Welcome to Foosha Village/Spawn\n"); break;}
+                    
+                    String message = "It Appears That....,You Have Ventured in a New Location....,Prepare To DIE!!!!\n";
+                    
+                    for(var sentence : message.split(",")) {
+                        System.out.println(sentence);
+                        Thread.sleep(3500L);
+                    }
+                    
+                    System.out.println("____________________________________________________");
+                    System.out.println("----------------!! BOSS BATTLE !!-------------------");
+                    switch(Arrays.toString(player.playerPosition)) {
+                        case "[3, 12]" -> encounter(150, " (Sky Island Boss)", 15, 5);
+                        case "[-3, -12]" -> encounter(50, " (Fish Island Boss)", 30, 15);
+                        case "[15, 15]" -> encounter(250, " (Wano Boss)", 25, 10); 
+                        case "[50, 50]" -> encounter(300, " (Grand Line Boss)", 30, 15); 
+                    }
+                    
+                    break;
+                }
+            }
 
-            char inputAction = s.nextLine().trim().toLowerCase().charAt(0);
+            System.out.print("Enter Movement: ");
             
-            if(inputAction == 'x') break;
-            
-            switch(inputAction) {
-                case 'w' -> player.playerPosition[1]++;
-                case 'a' -> player.playerPosition[0]--;
-                case 's' -> player.playerPosition[1]--;
-                case 'd' -> player.playerPosition[0]++;
+            String inputAction = s.nextLine().trim().toLowerCase();
+            if(inputAction.isEmpty()) System.out.println("Bruh Moment");
+            else {
+                
+                
+                
+                if(inputAction.charAt(0) == 'x') break;
+
+                switch(inputAction.charAt(0)) {
+                    case 'w' -> player.playerPosition[1]++;
+                    case 'a' -> player.playerPosition[0]--;
+                    case 's' -> player.playerPosition[1]--;
+                    case 'd' -> player.playerPosition[0]++;
+                }
             }
         }
     }
+    
+//    private static String enteredNewLand() {
+//        
+//    }
     
     private static String coordinateToLocation () {
         
@@ -134,28 +173,32 @@ public class TurnBasedGame {
         
         return switch(stringPosition) {
             case "[0, 0]" -> "Spawn/Foosha Village";
-            case "[15,100]" -> "Sky Island";
-            case "[25,-100]" -> "Fish Island";
-            case "[50,50]" -> "The Land of Wano";
-            case "[333, 666]" -> "GrandLine";
-            default -> "Unknown";
+            case "[3, 12]" -> "Sky Island";
+            case "[-3, -12]" -> "Fish Island";
+            case "[15, 15]" -> "The Land of Wano";
+            case "[30, 30]" -> "GrandLine";
+            default -> "Wilderness";
         };
     }
     
     
-    private static void encounter() {
+    private static void encounter(int botHP, String additionalInfo, int maxDMG, int minDMG) throws InterruptedException {
+        
+        // ---------------------- Player HP Reset ------------------------------
+        player.playerHP = 100;
+        // ---------------------------------------------------------------------
         
         // ------------------ Random Bot Name Generator ------------------------
         String botFirstName = firstNames.get(random.nextInt(15));
         String botLastName = lastNames.get(random.nextInt(15));
         
-        String botName = "%s %s".formatted(botFirstName, botLastName);
+        String botName = "%s %s%s".formatted(botFirstName, botLastName, additionalInfo);
         
         firstNames.remove(botFirstName);
         lastNames.remove(botLastName);
         // ---------------------------------------------------------------------
         
-        Character bot = new Character(100, botName, 10, 1, "Heal", "UnoReverse");
+        Character bot = new Character(botHP, botName, maxDMG, minDMG, "Heal", "UnoReverse");
         
         int gameTime = 1;
         
@@ -179,7 +222,7 @@ public class TurnBasedGame {
                 
                 System.out.println("\n----------- Player at Play! ------------");
                 encounterInputAction(player, bot, actionStringInput);
-                System.out.println("------------------------------------------");
+                System.out.println("------------------------------------------"); Thread.sleep(2000L);
                 
                 if(bot.playerHP <= 0) {
                     System.out.println("You Won"); break;
@@ -188,13 +231,15 @@ public class TurnBasedGame {
             }
             else {
                 
+                System.out.printf("%n%s is Analyzing their Next Brilliant Move!!%n".formatted(bot.playerName)); Thread.sleep(7000L);
+                
                 String randomBotChoice = switch (random.nextInt(3) + 1) {case 1 -> "attack"; case 2 -> "stun"; case 3 -> "skip"; default -> "ran";}; 
                 System.out.printf("%n----- %s at Play! (Random Choice) -----%n".formatted(bot.playerName));
                 if(bot.passive.containsKey("Heal")) bot.passive.get("Heal").passiveAbility(bot, player);
                 if(player.actionHistoryStack.peek().equals("attack")) bot.passive.get("UnoReverse").passiveAbility(bot, player);
                 encounterInputAction(bot, player, randomBotChoice);
                 if(randomBotChoice.equals(randomBotChoice)) parry(player);
-                System.out.println("------------------------------------------");
+                System.out.println("------------------------------------------"); Thread.sleep(5000L);
                 
                 if(player.playerHP <= 0) {
                     System.out.println("You Lost"); break;
@@ -215,7 +260,7 @@ public class TurnBasedGame {
         }
         
         if(character.burned != 0) {
-            System.out.printf("%s Has been burned to %dHP turns left%n", character.playerName, 
+            System.out.printf("%s Has been burned to %d HP   %d turns left%n", character.playerName, 
                                                                          character.playerHP -= 3,
                                                                          character.burned--);
         }
@@ -344,7 +389,7 @@ class Character {
     
 }
 
-abstract class Passive {
+interface Passive {
     
     public abstract void passiveAbility (Character character, Character enemy);
     
@@ -356,66 +401,60 @@ abstract class Passive {
             default -> null;
         };
     }
-    
+}
+
+class HealPassive implements Passive {
+
     @Override
-    public String toString() {
-        return this.getClass().getName();
+    public void passiveAbility(Character character, Character enemy) {
+
+        if(character.playerHPStack.size() <= 1 || new Random().nextInt(4) + 1 != 4) return;
+        character.playerHPStack.pop();
+        character.playerHP = character.playerHPStack.peek();
+        System.out.printf("%s's *Passive Healing Ability* has healed itself back to %s%n", character.playerName, character.playerHP);
     }
 }
 
-    class HealPassive extends Passive {
-        
-        @Override
-        public void passiveAbility(Character character, Character enemy) {
+class TurnTechniquePassive implements Passive {
 
-            if(character.playerHPStack.size() <= 1 || new Random().nextInt(4) + 1 != 4) return;
-            character.playerHPStack.pop();
-            character.playerHP = character.playerHPStack.peek();
-            System.out.printf("%s's *Passive Healing Ability* has healed itself back to %s%n", character.playerName, character.playerHP);
-        }
-    }
-    
-    class TurnTechniquePassive extends Passive {
-        
-        Queue<Integer> attackStack = new LinkedList<>();
-            
-        @Override
-        public void passiveAbility(Character character, Character enemy) {
-            attackStack.add(character.playerDMG);
-            if(attackStack.size() % 4 == 0) {
-                int abilityChoice = new Random().nextInt(2);
-                if(abilityChoice == 0) {
-                    System.out.println("*Turn Technique Passive/Jingu Mastery* has been activiated -> double damage");
-                    character.playerDMG = character.playerDMG * 2;
-                }
-                else {
-                    System.out.println("*Turn Technique Passive/Jingu Mastery* has been activiated -> enemy has been burned for 3 turns");
-                    enemy.burned = 3;
-                }
+    Queue<Integer> attackStack = new LinkedList<>();
+
+    @Override
+    public void passiveAbility(Character character, Character enemy) {
+        attackStack.add(character.playerDMG);
+        if(attackStack.size() % 4 == 0) {
+            int abilityChoice = new Random().nextInt(2);
+            if(abilityChoice == 0) {
+                System.out.println("*Turn Technique Passive/Jingu Mastery* has been activiated -> double damage");
+                character.playerDMG = character.playerDMG * 2;
+            }
+            else {
+                System.out.println("*Turn Technique Passive/Jingu Mastery* has been activiated -> enemy has been burned for 3 turns");
+                enemy.burned = 3;
             }
         }
     }
-    
-    class UnoReversePassive extends Passive {
-        
-        @Override
-        public void passiveAbility(Character character, Character enemy) {
-            
-            Stack<Integer> damageInflictedStack = enemy.damageInflicted;
-            
-            if(damageInflictedStack.isEmpty()) damageInflictedStack.add(character.playerDMG);
-            
-            if (new Random().nextInt(5) == 0) {
-                if (!damageInflictedStack.isEmpty()) {
-                    System.out.printf("%s has used *Uno Reversed Technique*. %s healed, %s damage returned %n", 
-                            character.playerName,
-                            damageInflictedStack.peek(),
-                            damageInflictedStack.peek());
-                            character.playerHP += damageInflictedStack.peek();
-                            enemy.playerDMG -= damageInflictedStack.pop();
-                } 
-                else System.out.println("UNO reverse card failed.");
-            }
+}
+
+class UnoReversePassive implements Passive {
+
+    @Override
+    public void passiveAbility(Character character, Character enemy) {
+
+        Stack<Integer> damageInflictedStack = enemy.damageInflicted;
+
+        if(damageInflictedStack.isEmpty()) damageInflictedStack.add(character.playerDMG);
+
+        if (new Random().nextInt(10) == 0) {
+            if (!damageInflictedStack.isEmpty()) {
+                System.out.printf("%s has used *Uno Reversed Technique*. %s healed, %s damage returned %n", 
+                        character.playerName,
+                        damageInflictedStack.peek(),
+                        damageInflictedStack.peek());
+                        character.playerHPStack.push(character.playerHP += damageInflictedStack.peek());
+                        enemy.playerDMG -= damageInflictedStack.pop();
+            } 
+            else System.out.println("UNO reverse card failed.");
         }
     }
-   
+}
